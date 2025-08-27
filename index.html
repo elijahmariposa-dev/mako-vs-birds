@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Mako vs Birds</title>
+  <style>
+    canvas { background: black; display: block; margin: 0 auto; }
+  </style>
+</head>
+<body>
+<canvas id="game" width="448" height="496"></canvas>
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const tileSize = 16;
+const rows = 31;
+const cols = 28;
+
+let map = [];
+let pellets = [];
+let score = 0;
+
+function makeMap() {
+  for (let r = 0; r < rows; r++) {
+    map[r] = [];
+    for (let c = 0; c < cols; c++) {
+      if (r === 0 || c === 0 || r === rows-1 || c === cols-1) {
+        map[r][c] = 1; // wall
+      } else {
+        map[r][c] = 0; // empty
+        pellets.push({x:c,y:r});
+      }
+    }
+  }
+}
+makeMap();
+
+let mako = {x:14, y:23, dx:0, dy:0};
+let birds = [
+  {x:13, y:11, dx:1, dy:0},
+  {x:14, y:11, dx:-1, dy:0}
+];
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  
+  // pellets
+  ctx.fillStyle="white";
+  pellets.forEach(p=>{
+    ctx.beginPath();
+    ctx.arc(p.x*tileSize+tileSize/2, p.y*tileSize+tileSize/2, 3, 0, Math.PI*2);
+    ctx.fill();
+  });
+  
+  // mako
+  ctx.fillStyle="tan";
+  ctx.beginPath();
+  ctx.arc(mako.x*tileSize+tileSize/2, mako.y*tileSize+tileSize/2, tileSize/2, 0, Math.PI*2);
+  ctx.fill();
+  
+  // birds
+  ctx.fillStyle="red";
+  birds.forEach(b=>{
+    ctx.beginPath();
+    ctx.arc(b.x*tileSize+tileSize/2, b.y*tileSize+tileSize/2, tileSize/2, 0, Math.PI*2);
+    ctx.fill();
+  });
+  
+  // score
+  ctx.fillStyle="white";
+  ctx.fillText("Score: "+score, 10, 10);
+}
+
+function update() {
+  mako.x += mako.dx;
+  mako.y += mako.dy;
+  
+  // eat pellets
+  pellets = pellets.filter(p=>{
+    if (p.x===mako.x && p.y===mako.y) {
+      score+=10;
+      return false;
+    }
+    return true;
+  });
+  
+  // move birds
+  birds.forEach(b=>{
+    b.x+=b.dx;
+    b.y+=b.dy;
+    if (Math.random()<0.1) {
+      let dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+      let d=dirs[Math.floor(Math.random()*4)];
+      b.dx=d[0]; b.dy=d[1];
+    }
+    // collision
+    if (b.x===mako.x && b.y===mako.y) {
+      alert("Game Over! Score: "+score);
+      document.location.reload();
+    }
+  });
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+loop();
+
+document.addEventListener("keydown", e=>{
+  if (e.key==="ArrowUp") {mako.dx=0;mako.dy=-1;}
+  if (e.key==="ArrowDown") {mako.dx=0;mako.dy=1;}
+  if (e.key==="ArrowLeft") {mako.dx=-1;mako.dy=0;}
+  if (e.key==="ArrowRight") {mako.dx=1;mako.dy=0;}
+});
+</script>
+</body>
+</html>
